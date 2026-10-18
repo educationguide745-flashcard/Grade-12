@@ -304,13 +304,40 @@ button.action-btn:hover {
 
 <script>
 const config = {
-  Myanmar: { label: "Category / အမျိုးအစား", items: ["ကဗျာ", "ဝတ္ထု", "စာစီစာကုံး", "သဒ္ဒါ", "ဖတ်စာ", "အခြားခေါင်းစဉ်"] },
+  Myanmar: { 
+    label: "Category / ခေါင်းစဉ်", 
+    items: [
+      "အပြော အခန်း၁",
+      "အပြော အခန်း၂",
+      "အပြော အခန်း၃",
+      "ညောင်ရမ်းကြီးသမီးစကားပြေ",
+      "သစ္စာနှင့်ပညာ စကားပြေ",
+      "ခေတ်စကားပြေ",
+      "မလုပ်မစား စကားပြေ",
+      "စာဘူးတောင်း စကားပြေ",
+      "ဦးဖေမောင်တင် စကားပြေ",
+      "အဖြူနဲ့အနက် စကားပြေ",
+      "စိတ်ဓာတ်ရင့်ကျက်တည်ငြိမ်ခြင်း စကားပြေ",
+      "ပေါ်နွေလလျှင်",
+      "ငါ့ကိုလွယ် အမယ်ကြီးနှင့်",
+      "ဩဝါဒထူးပျို့",
+      "ပေါင်းရှစ်ယောက်ကောက်စိုက်သူ",
+      "အညာမဂ်လာဆောင်",
+      "ကမ္ဗောဇသို့",
+      "လက်ဖက်ရည်ကြမ်းဝိုင်း",
+      "ပဒေသာလက်ရာ",
+      "အရေး အခန်း ၁",
+      "အရေး အခန်း ၂",
+      "အရေး အခန်း၃"
+    ] 
+  },
   English: { label: "Unit", items: Array.from({ length: 12 }, (_, i) => "Unit " + (i + 1)) },
   Chemistry: { label: "Chapter", items: Array.from({ length: 8 }, (_, i) => "Chapter " + (i + 1)) },
   Biology: { label: "Chapter", items: Array.from({ length: 6 }, (_, i) => "Chapter " + (i + 1)) }
 };
 
 const sampleData = [
+  { subject: "Myanmar", chapter: "ညောင်ရမ်းကြီးသမီးစကားပြေ", title: "စကားပြေ", q: "ညောင်ရမ်းကြီးသမီးစကားပြေကို မည်သူရေးသားခဲ့သနည်း။", a: "စာရေးဆရာအမည်" },
   { subject: "English", chapter: "Unit 1", title: "Vocabulary", q: "What is a synonym?", a: "A word with the same or nearly the same meaning." },
   { subject: "Chemistry", chapter: "Chapter 1", title: "Chemistry", q: "What is the formula of baking soda?", a: "NaHCO₃" },
   { subject: "Biology", chapter: "Chapter 1", title: "Cell", q: "Which organelle produces most ATP?", a: "Mitochondria" }
@@ -459,7 +486,6 @@ function handleQuizAction() {
   }
   
   if (quizList.length === 0) {
-    // Start Quiz
     quizList = [...list].sort(() => Math.random() - 0.5);
     quizIdx = 0;
     score = 0;
@@ -475,7 +501,6 @@ function showQuizQuestion() {
   $("options").innerHTML = "";
   $("result").textContent = "";
 
-  // Get wrong options
   const wrongOptions = cards
     .filter(c => c.a !== current.a)
     .sort(() => Math.random() - 0.5)
@@ -516,7 +541,6 @@ function checkAnswer(selectedBtn, selectedAns, correctAns) {
     $("result").textContent = `အမှားပါ။ အဖြေမှန်မှာ: ${correctAns}`;
   }
 
-  // Show Next Button
   const actionBtn = $("quizActionBtn");
   actionBtn.classList.remove("hidden");
   actionBtn.textContent = quizIdx < quizList.length - 1 ? "နောက်မေးခွန်းသို့ →" : "ရလဒ်ကြည့်ရန်";
@@ -540,7 +564,6 @@ function proceedQuiz() {
   }
 }
 
-// Initializing application
 populateChapters("Myanmar", "chapter", "chapterLabel");
 populateChapters("Myanmar", "newChapter", "newChapterLabel");
 switchTab("study");
