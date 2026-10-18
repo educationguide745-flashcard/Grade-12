@@ -14,6 +14,7 @@
   --text-muted: #64748b;
   --border-color: #e2e8f0;
   --success: #10b981;
+  --danger: #ef4444;
 }
 
 body {
@@ -121,6 +122,14 @@ button.action-btn:hover {
   background: var(--primary-hover);
 }
 
+button.danger-btn {
+  background: var(--danger);
+}
+
+button.danger-btn:hover {
+  background: #dc2626;
+}
+
 .card {
   background: #f8fafc;
   border: 2px dashed var(--border-color);
@@ -196,7 +205,7 @@ button.action-btn:hover {
 
 .option.wrong {
   background: #fee2e2;
-  border-color: #ef4444;
+  border-color: var(--danger);
   color: #991b1b;
 }
 
@@ -216,6 +225,18 @@ button.action-btn:hover {
   margin-top: 12px;
   font-weight: 600;
   color: var(--success);
+}
+
+.manage-btn-group {
+  display: flex;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.manage-btn-group button {
+  flex: 1;
+  padding: 8px 12px;
+  font-size: 0.85rem;
 }
 </style>
 </head>
@@ -260,6 +281,10 @@ button.action-btn:hover {
     <button class="action-btn" onclick="toggleAnswer()">အဖြေပြမည်</button>
     <button class="action-btn" onclick="moveCard(1)">နောက်သို့ →</button>
   </div>
+  <div class="manage-btn-group" id="cardManageBtns">
+    <button class="action-btn" style="background:#64748b;" onclick="editCurrentCard()">✏️ မေးခွန်းပြင်မည်</button>
+    <button class="action-btn danger-btn" onclick="deleteCurrentCard()">🗑️ ဖျက်မည်</button>
+  </div>
 </section>
 
 <!-- Quiz Section -->
@@ -271,9 +296,9 @@ button.action-btn:hover {
   <button class="action-btn" id="quizActionBtn" onclick="handleQuizAction()">Start Quiz</button>
 </section>
 
-<!-- Add Question Section -->
+<!-- Add / Edit Question Section -->
 <section id="add" class="box hidden">
-  <h2>မေးခွန်းအသစ်ထည့်ရန်</h2>
+  <h2 id="formTitle">မေးခွန်းအသစ်ထည့်ရန်</h2>
 
   <label for="newSubject">Subject</label>
   <select id="newSubject" onchange="updateNewChapters()">
@@ -295,7 +320,8 @@ button.action-btn:hover {
   <label for="newA">Answer / အဖြေ</label>
   <textarea id="newA" rows="3" placeholder="အဖြေရေးပါ"></textarea>
 
-  <button class="action-btn" style="margin-top: 12px;" onclick="addCard()">Save Question</button>
+  <button class="action-btn" id="saveBtn" style="margin-top: 12px;" onclick="addCard()">Save Question</button>
+  <button class="action-btn hidden" id="cancelEditBtn" style="margin-top: 12px; background:#64748b;" onclick="cancelEdit()">မပြင်တော့ပါ</button>
   <p id="message"></p>
 </section>
 
@@ -351,6 +377,7 @@ try {
 }
 
 let currentIdx = 0;
+let editingCardIndex = -1; // -1 means not editing
 let quizList = [], quizIdx = 0, score = 0, answered = false;
 
 const $ = id => document.getElementById(id);
@@ -405,9 +432,11 @@ function renderFlashcard() {
     $("question").textContent = "မေးခွန်းအသစ် ထည့်ပါ";
     $("answer").textContent = "";
     $("answer").style.display = "none";
+    $("cardManageBtns").classList.add("hidden");
     return;
   }
 
+  $("cardManageBtns").classList.remove("hidden");
   $("count").textContent = `မေးခွန်း ${currentIdx + 1} / ${list.length}`;
   const current = list[currentIdx];
   $("question").textContent = (current.title ? current.title + " — " : "") + current.q;
@@ -445,25 +474,80 @@ function addCard() {
   const a = $("newA").value.trim();
 
   if (!q || !a) {
-    $("message").style.color = "#ef4444";
+    $("message").style.color = "var(--danger)";
     $("message").textContent = "မေးခွန်းနှင့် အဖြေကို မဖြစ်မနေ ဖြည့်သွင်းပါ။";
     return;
   }
 
-  cards.push({ subject, chapter, title, q, a });
-  saveData();
-
-  $("message").style.color = "var(--success)";
-  $("message").textContent = "မေးခွန်းအသစ် သိမ်းဆည်းပြီးပါပြီ။";
-  $("newQ").value = "";
-  $("newA").value = "";
-  $("title").value = "";
+  if (editingCardIndex > -1) {
+    // Updating existing card
+    cards[editingCardIndex] = { subject, chapter, title, q, a };
+    saveData();
+    $("message").style.color = "var(--success)";
+    $("message").textContent = "မေးခွန်းပြင်ဆင်ပြီးပါပြီ။";
+    cancelEdit();
+  } else {
+    // Adding new card
+    cards.push({ subject, chapter, title, q, a });
+    saveData();
+    $("message").style.color = "var(--success)";
+    $("message").textContent = "မေးခွန်းအသစ် သိမ်းဆည်းပြီးပါပြီ။";
+    $("newQ").value = "";
+    $("newA").value = "";
+    $("title").value = "";
+  }
 
   $("subject").value = subject;
   onSubjectChange();
   $("chapter").value = chapter;
   currentIdx = getFilteredCards().length - 1;
   renderFlashcard();
+}
+
+function editCurrentCard() {
+  const list = getFilteredCards();
+  if (list.length === 0) return;
+
+  const cardToEdit = list[currentIdx];
+  editingCardIndex = cards.indexOf(cardToEdit);
+
+  if (editingCardIndex === -1) return;
+
+  switchTab("add");
+  $("formTitle").textContent = "မေးခွန်း ပြင်ဆင်ရန်";
+  $("newSubject").value = cardToEdit.subject;
+  updateNewChapters();
+  $("newChapter").value = cardToEdit.chapter;
+  $("title").value = cardToEdit.title || "";
+  $("newQ").value = cardToEdit.q;
+  $("newA").value = cardToEdit.a;
+  
+  $("saveBtn").textContent = "Update Question (ပြင်မည်)";
+  $("cancelEditBtn").classList.remove("hidden");
+  $("message").textContent = "";
+}
+
+function cancelEdit() {
+  editingCardIndex = -1;
+  $("formTitle").textContent = "မေးခွန်းအသစ်ထည့်ရန်";
+  $("saveBtn").textContent = "Save Question";
+  $("cancelEditBtn").classList.add("hidden");
+  $("newQ").value = "";
+  $("newA").value = "";
+  $("title").value = "";
+  $("message").textContent = "";
+}
+
+function deleteCurrentCard() {
+  const list = getFilteredCards();
+  if (list.length === 0) return;
+
+  const cardToDelete = list[currentIdx];
+  if (confirm("ဒီမေးခွန်းကို ဖျက်ရန် သေချာပါသလား?")) {
+    cards = cards.filter(c => c !== cardToDelete);
+    saveData();
+    renderFlashcard();
+  }
 }
 
 function resetQuizState() {
@@ -537,7 +621,7 @@ function checkAnswer(selectedBtn, selectedAns, correctAns) {
     $("result").style.color = "var(--success)";
     $("result").textContent = "မှန်ပါတယ်! 🎉";
   } else {
-    $("result").style.color = "#ef4444";
+    $("result").style.color = "var(--danger)";
     $("result").textContent = `အမှားပါ။ အဖြေမှန်မှာ: ${correctAns}`;
   }
 
@@ -572,3 +656,4 @@ renderFlashcard();
 
 </body>
 </html>
+
